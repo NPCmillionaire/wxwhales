@@ -1,0 +1,530 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>wxwhales</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><circle cx='16' cy='16' r='14' fill='%232563eb'/><path d='M8 18c3 4 13 4 16 0-2-1-4-5-8-5s-6 4-8 5z' fill='white'/></svg>">
+<style>
+:root{
+  --bg:#f6f7f9; --panel:#ffffff; --panel-2:#f1f3f6; --line:#e3e6eb; --text:#141821; --muted:#5d6675;
+  --faint:#8a93a2; --accent:#2563eb; --accent-soft:#e8efff; --pos:#0f8a5f; --pos-soft:#e3f5ee;
+  --neg:#c2410c; --neg-soft:#fdeee5; --warn:#a16207; --warn-soft:#fdf6dc; --us:#64748b;
+  --shadow:0 1px 2px rgba(16,24,40,.06),0 1px 3px rgba(16,24,40,.08);
+  --mono:ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0d1016; --panel:#151a22; --panel-2:#1b212b; --line:#262e3a; --text:#e7eaf0; --muted:#9aa4b4;
+  --faint:#6b7585; --accent:#6d9bff; --accent-soft:#1c2a47; --pos:#3fcf98; --pos-soft:#11291f;
+  --neg:#ff8a5c; --neg-soft:#33190f; --warn:#f2c14e; --warn-soft:#2e2510; --us:#94a3b8;
+  --shadow:0 1px 2px rgba(0,0,0,.4);
+}}
+:root[data-theme="dark"]{
+  --bg:#0d1016; --panel:#151a22; --panel-2:#1b212b; --line:#262e3a; --text:#e7eaf0; --muted:#9aa4b4;
+  --faint:#6b7585; --accent:#6d9bff; --accent-soft:#1c2a47; --pos:#3fcf98; --pos-soft:#11291f;
+  --neg:#ff8a5c; --neg-soft:#33190f; --warn:#f2c14e; --warn-soft:#2e2510; --us:#94a3b8;
+  --shadow:0 1px 2px rgba(0,0,0,.4);
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--text);font:14px/1.45 -apple-system,BlinkMacSystemFont,"Inter","Segoe UI",sans-serif}
+button,input,select{font:inherit;color:inherit}
+.num{font-variant-numeric:tabular-nums}
+.mono{font-family:var(--mono);font-size:12.5px}
+header{position:sticky;top:0;z-index:5;background:var(--bg);border-bottom:1px solid var(--line)}
+.bar{max-width:1280px;margin:0 auto;padding:12px 20px;display:flex;align-items:center;gap:18px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:650;font-size:16px;letter-spacing:-.01em}
+.brand svg{width:26px;height:26px}
+nav{display:flex;gap:2px;background:var(--panel-2);padding:3px;border-radius:9px}
+nav button{border:0;background:none;padding:6px 14px;border-radius:7px;cursor:pointer;color:var(--muted);font-weight:550}
+nav button.on{background:var(--panel);color:var(--text);box-shadow:var(--shadow)}
+.spacer{flex:1}
+.status{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:12.5px}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--pos)}
+.dot.busy{background:var(--accent);animation:pulse 1s infinite}
+.dot.err{background:var(--neg)}
+@keyframes pulse{50%{opacity:.35}}
+.iconbtn{border:1px solid var(--line);background:var(--panel);border-radius:8px;padding:6px 10px;cursor:pointer}
+.iconbtn:hover{border-color:var(--faint)}
+main{max-width:1280px;margin:0 auto;padding:18px 20px 60px}
+.view{display:none}.view.on{display:block}
+.controls{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:14px}
+.controls label{display:flex;align-items:center;gap:6px;color:var(--muted);font-size:13px}
+select,input[type=number],input[type=text]{background:var(--panel);border:1px solid var(--line);border-radius:7px;padding:5px 8px}
+input[type=number]{width:90px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--panel)}
+.seg button{border:0;background:none;padding:5px 11px;cursor:pointer;color:var(--muted)}
+.seg button.on{background:var(--accent-soft);color:var(--accent);font-weight:600}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow)}
+.card h3{margin:0;font-size:13px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.card .hd{padding:12px 16px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
+.tablewrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse}
+th{text-align:left;font-weight:600;font-size:12px;color:var(--muted);padding:9px 12px;border-bottom:1px solid var(--line);white-space:nowrap;background:var(--panel);position:sticky;top:0}
+td{padding:8px 12px;border-bottom:1px solid var(--line);white-space:nowrap}
+tr:last-child td{border-bottom:0}
+td.r,th.r{text-align:right}
+tbody tr:hover{background:var(--panel-2)}
+tr.fresh{animation:fresh 2.5s ease-out}
+@keyframes fresh{from{background:var(--accent-soft)}to{background:transparent}}
+.chip{display:inline-block;padding:1px 7px;border-radius:999px;font-size:11.5px;font-weight:600;background:var(--panel-2);color:var(--muted)}
+.chip.manual{background:var(--accent-soft);color:var(--accent)}
+.chip.leaderboard{background:var(--warn-soft);color:var(--warn)}
+.chip.toppnl{background:var(--pos-soft);color:var(--pos)}
+.chip.size{background:var(--panel-2);color:var(--muted)}
+.chip.us{background:var(--panel-2);color:var(--us)}
+.pos{color:var(--pos)}.neg{color:var(--neg)}.muted{color:var(--muted)}.faint{color:var(--faint)}
+.side{font-weight:650;font-size:12px}
+.link{color:var(--accent);cursor:pointer;text-decoration:none}
+.link:hover{text-decoration:underline}
+.star{border:0;background:none;cursor:pointer;font-size:16px;color:var(--faint);padding:0 4px;line-height:1}
+.star.on{color:#e0a400}
+.empty{padding:40px;text-align:center;color:var(--muted)}
+.grid{display:grid;gap:14px}
+.g2{grid-template-columns:1.4fr 1fr}
+@media (max-width:900px){.g2{grid-template-columns:1fr}.bar{flex-wrap:wrap}}
+.note{padding:10px 14px;border-radius:10px;font-size:13px;margin-bottom:14px}
+.note.warn{background:var(--warn-soft);color:var(--warn)}
+.note.info{background:var(--panel-2);color:var(--muted)}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px}
+.tile{background:var(--panel-2);border-radius:10px;padding:10px 12px}
+.tile .k{font-size:11.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.tile .v{font-size:20px;font-weight:650;margin-top:2px}
+/* signal chart */
+.ladder{padding:14px 16px}
+.lrow{display:grid;grid-template-columns:110px 1fr 70px;gap:12px;align-items:center;padding:7px 0}
+.lrow .lbl{font-weight:600}
+.bars{position:relative;display:flex;flex-direction:column;gap:3px}
+.b{height:12px;border-radius:3px;min-width:2px}
+.b.wh{background:var(--accent)}
+.b.us{background:var(--us);opacity:.55}
+.legend{display:flex;gap:16px;font-size:12px;color:var(--muted);padding:0 16px 12px}
+.legend i{display:inline-block;width:12px;height:10px;border-radius:2px;margin-right:6px;vertical-align:-1px}
+.div{display:grid;grid-template-columns:110px 1fr 1fr 70px;gap:0;align-items:center;padding:4px 16px}
+.div .neg-half{display:flex;justify-content:flex-end;border-right:1px solid var(--line);padding-right:0}
+.div .pos-half{display:flex;justify-content:flex-start}
+.div .b{height:14px}
+.b.p{background:var(--pos)}.b.n{background:var(--neg)}
+/* drawer */
+.scrim{position:fixed;inset:0;background:rgba(10,14,20,.35);display:none;z-index:20}
+.scrim.on{display:block}
+.drawer{position:fixed;top:0;right:0;bottom:0;width:min(720px,100%);background:var(--bg);z-index:21;transform:translateX(100%);transition:transform .2s ease;overflow-y:auto;border-left:1px solid var(--line)}
+.drawer.on{transform:none}
+.drawer .in{padding:20px}
+.drawer h2{margin:0 0 4px;font-size:19px}
+.modal{position:fixed;inset:0;display:none;place-items:center;z-index:30;background:rgba(10,14,20,.35)}
+.modal.on{display:grid}
+.modal .card{width:min(440px,92vw);padding:18px}
+.form{display:grid;grid-template-columns:1fr auto;gap:10px 14px;align-items:center;margin:14px 0}
+.form .hint{grid-column:1/-1;font-size:12px;color:var(--faint);margin-top:-6px}
+.btn{border:1px solid var(--line);background:var(--panel);border-radius:8px;padding:7px 14px;cursor:pointer;font-weight:550}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.spin{display:inline-block;width:12px;height:12px;border:2px solid var(--line);border-top-color:var(--accent);border-radius:50%;animation:sp .7s linear infinite;vertical-align:-2px}
+@keyframes sp{to{transform:rotate(360deg)}}
+.toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:var(--text);color:var(--bg);padding:8px 14px;border-radius:8px;font-size:13px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:40}
+.toast.on{opacity:.92}
+</style>
+</head>
+<body>
+<header>
+  <div class="bar">
+    <div class="brand">
+      <svg viewBox="0 0 32 32"><circle cx="16" cy="16" r="15" fill="var(--accent)"/><path d="M7 18.5c3.5 4.2 14.5 4.2 18 0-2.4-.8-4.6-5.5-9-5.5s-6.6 4.7-9 5.5z" fill="#fff"/><circle cx="12" cy="17.5" r="1" fill="var(--accent)"/></svg>
+      wxwhales
+    </div>
+    <nav id="tabs">
+      <button data-v="feed" class="on">Live feed</button>
+      <button data-v="whales">Whales</button>
+      <button data-v="leaderboard">Leaderboard</button>
+      <button data-v="signal">US signal</button>
+    </nav>
+    <div class="spacer"></div>
+    <div class="status" id="status"><span class="dot"></span><span>connecting…</span></div>
+    <button class="iconbtn" id="themeBtn" title="Toggle theme">◐</button>
+    <button class="iconbtn" id="settingsBtn" title="Settings">⚙︎</button>
+  </div>
+</header>
+
+<main>
+  <!-- FEED -->
+  <section class="view on" id="v-feed">
+    <div class="controls">
+      <div class="seg" id="feedMode">
+        <button data-m="alerts" class="on" title="Big trades + any trade by a watched wallet">Alerts</button>
+        <button data-m="watched" title="Only watched wallets">Watched</button>
+        <button data-m="all" title="Every trade above the size filter">All</button>
+      </div>
+      <label>min $ <input type="number" id="feedMin" value="1000" step="100"></label>
+      <label>last <select id="feedHours"><option value="1">1h</option><option value="6" selected>6h</option><option value="24">24h</option><option value="72">3d</option></select></label>
+      <label>city <select id="feedCity"><option value="">all</option></select></label>
+      <label><input type="checkbox" id="feedSweeps"> include 99¢ sweeps</label>
+      <span class="spacer"></span>
+      <span class="faint" id="feedCount"></span>
+    </div>
+    <div class="card"><div class="tablewrap"><table>
+      <thead><tr><th>time</th><th class="r">size</th><th>trade</th><th class="r">price</th><th>market</th><th>bucket</th><th>wallet</th><th></th><th>US</th></tr></thead>
+      <tbody id="feedBody"></tbody>
+    </table></div><div class="empty" id="feedEmpty" hidden>No matching trades yet. Lower the size filter or widen the window.</div></div>
+  </section>
+
+  <!-- WHALES -->
+  <section class="view" id="v-whales">
+    <div class="controls">
+      <label>rank by <span class="seg" id="whBy">
+        <button data-b="pnl" class="on">PnL</button><button data-b="roi">ROI</button>
+        <button data-b="volume">Volume</button><button data-b="biggest">Biggest trade</button></span></label>
+      <label>last <select id="whDays"><option value="3">3d</option><option value="7" selected>7d</option><option value="14">14d</option><option value="30">30d</option></select></label>
+      <label>min trades <input type="number" id="whMin" value="5" min="1"></label>
+    </div>
+    <div class="note info">PnL, ROI and hit rate count only resolved buckets, assume buys are held to settlement, and only include trades of the storage floor ($25) or more. A ~100% hit rate with ~0% ROI is a settlement sweeper, not a forecaster.</div>
+    <div class="card"><div class="tablewrap"><table>
+      <thead><tr><th></th><th>wallet</th><th class="r">trades</th><th class="r">events</th><th class="r">volume</th><th class="r">biggest</th><th class="r">PnL</th><th class="r">ROI</th><th class="r">hit</th><th class="r">lb #</th><th class="r">last</th></tr></thead>
+      <tbody id="whBody"></tbody>
+    </table></div></div>
+  </section>
+
+  <!-- LEADERBOARD -->
+  <section class="view" id="v-leaderboard">
+    <div class="controls">
+      <span class="seg" id="lbPeriod">
+        <button data-p="DAY">Day</button><button data-p="WEEK">Week</button>
+        <button data-p="MONTH" class="on">Month</button><button data-p="ALL">All time</button></span>
+      <button class="btn" id="lbRefresh">Refresh</button>
+      <span class="faint">Polymarket's official WEATHER leaderboard, by PnL</span>
+    </div>
+    <div class="card"><div class="tablewrap"><table>
+      <thead><tr><th></th><th class="r">#</th><th>wallet</th><th class="r">volume</th><th class="r">PnL</th><th class="r">PnL / vol</th><th class="r">trades here (30d)</th></tr></thead>
+      <tbody id="lbBody"></tbody>
+    </table></div></div>
+  </section>
+
+  <!-- SIGNAL -->
+  <section class="view" id="v-signal">
+    <div class="controls">
+      <label>event <select id="sgEvent"></select></label>
+      <label>whale = trade ≥ $<input type="number" id="sgMin" value="500" step="100"></label>
+      <label>or top <input type="number" id="sgTop" value="20" min="0" style="width:60px"> wallets</label>
+    </div>
+    <div id="sgOut"><div class="empty">Pick an event.</div></div>
+  </section>
+</main>
+
+<div class="scrim" id="scrim"></div>
+<aside class="drawer" id="drawer"><div class="in" id="drawerIn"></div></aside>
+
+<div class="modal" id="settings"><div class="card">
+  <h2 style="margin:0;font-size:17px">Settings</h2>
+  <div class="form">
+    <span>Sync every (seconds)</span><input type="number" id="s_interval" min="10">
+    <span>Alert on any trade ≥ $</span><input type="number" id="s_min_trade" step="100">
+    <span>Watched wallets: alert ≥ $</span><input type="number" id="s_min_usd">
+    <span class="hint">Also the storage floor for new trades.</span>
+    <span>Auto-watch top N wallets</span><input type="number" id="s_top" min="0">
+    <span class="hint">From your DB's resolved PnL and the official monthly leaderboard. Starred wallets are always watched.</span>
+    <span>Include 99¢ settlement sweeps in alerts</span><input type="checkbox" id="s_include_sweeps">
+    <span>macOS notifications</span><input type="checkbox" id="s_notify">
+  </div>
+  <div style="display:flex;gap:8px;justify-content:flex-end">
+    <button class="btn" id="sStop" style="margin-right:auto;color:var(--neg)" title="Stop the background sync and server">Quit wxwhales</button>
+    <button class="btn" id="sCancel">Cancel</button><button class="btn primary" id="sSave">Save</button>
+  </div>
+</div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const money = x => x == null ? "—" : (x < 0 ? "−" : "") + "$" + (Math.abs(x) >= 1e6 ? (Math.abs(x)/1e6).toFixed(2)+"M" : Math.abs(x) >= 1e3 ? (Math.abs(x)/1e3).toFixed(1)+"k" : Math.abs(x).toFixed(0));
+const pct = x => x == null ? "—" : (x*100).toFixed(0) + "%";
+const signCls = x => x == null ? "" : x > 0 ? "pos" : x < 0 ? "neg" : "";
+const short = w => w ? w.slice(0,6) + "…" + w.slice(-4) : "";
+const ago = ts => { const s = Date.now()/1000 - ts; return s < 60 ? Math.max(0,s|0)+"s" : s < 3600 ? (s/60|0)+"m" : s < 86400 ? (s/3600|0)+"h" : (s/86400|0)+"d"; };
+const clock = ts => new Date(ts*1000).toLocaleTimeString([], {hour:"2-digit", minute:"2-digit", second:"2-digit"});
+const CITY = c => (c||"").replace(/-/g," ").replace(/\b\w/g, m => m.toUpperCase()).replace(/^Nyc$/,"NYC");
+const nm = (name, w) => !name || /^0x/i.test(name) || name.length > 22 || /^[0-9A-Fa-f]{30,}/.test(name) ? short(w) : name;
+const tagChip = t => !t ? "" : `<span class="chip ${t==="manual"?"manual":t==="leaderboard"?"leaderboard":"toppnl"}">${t==="manual"?"★ starred":t==="leaderboard"?"leaderboard":"top PnL"}</span>`;
+
+async function api(path, opts) {
+  const r = await fetch(path, opts);
+  const j = await r.json();
+  if (!r.ok) throw new Error(j.error || r.statusText);
+  return j;
+}
+function toast(msg) { const t = $("#toast"); t.textContent = msg; t.classList.add("on"); clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove("on"), 2200); }
+const store = { get(k, d) { try { const v = localStorage.getItem("wxw." + k); return v == null ? d : JSON.parse(v); } catch { return d; } },
+                set(k, v) { try { localStorage.setItem("wxw." + k, JSON.stringify(v)); } catch {} } };
+
+/* ---------- theme ---------- */
+function applyTheme(t) { if (t) document.documentElement.dataset.theme = t; else delete document.documentElement.dataset.theme; }
+applyTheme(store.get("theme", null));
+$("#themeBtn").onclick = () => {
+  const dark = matchMedia("(prefers-color-scheme: dark)").matches;
+  const cur = document.documentElement.dataset.theme || (dark ? "dark" : "light");
+  const next = cur === "dark" ? "light" : "dark"; applyTheme(next); store.set("theme", next);
+};
+
+/* ---------- tabs ---------- */
+const VIEWS = ["feed","whales","leaderboard","signal"];
+let view = VIEWS.includes(location.hash.slice(1)) ? location.hash.slice(1) : store.get("view", "feed");
+function show(v) {
+  view = v; store.set("view", v); history.replaceState(null, "", "#" + v);
+  $$("#tabs button").forEach(b => b.classList.toggle("on", b.dataset.v === v));
+  $$(".view").forEach(s => s.classList.toggle("on", s.id === "v-" + v));
+  refresh();
+}
+$$("#tabs button").forEach(b => b.onclick = () => show(b.dataset.v));
+
+/* ---------- status ---------- */
+let STATUS = null;
+async function loadStatus() {
+  try {
+    STATUS = await api("/api/status");
+    const s = STATUS, el = $("#status");
+    const cls = s.last_error ? "err" : s.syncing ? "busy" : "";
+    const txt = s.last_error ? "sync error — " + s.last_error.slice(0, 60)
+      : s.last_sync ? `synced ${ago(s.last_sync)} ago · ${s.trades.toLocaleString()} trades · ${s.events_open} open events · watching ${s.watching}`
+      : "first sync running…";
+    el.innerHTML = `<span class="dot ${cls}"></span><span>${esc(txt)}</span>`;
+  } catch (e) { $("#status").innerHTML = `<span class="dot err"></span><span>server offline</span>`; }
+}
+
+/* ---------- feed ---------- */
+let feedMode = store.get("feedMode", "alerts"), seen = new Set(), firstFeed = true;
+$$("#feedMode button").forEach(b => { b.classList.toggle("on", b.dataset.m === feedMode);
+  b.onclick = () => { feedMode = b.dataset.m; store.set("feedMode", feedMode); $$("#feedMode button").forEach(x => x.classList.toggle("on", x === b)); loadFeed(); }; });
+["#feedMin", "#feedHours", "#feedCity", "#feedSweeps"].forEach(s => $(s).onchange = () => loadFeed());
+
+async function loadFeed() {
+  const q = new URLSearchParams({ mode: feedMode, min_trade: $("#feedMin").value, hours: $("#feedHours").value,
+    city: $("#feedCity").value, sweeps: $("#feedSweeps").checked ? 1 : 0 });
+  const j = await api("/api/feed?" + q);
+  const rows = j.trades;
+  $("#feedCount").textContent = `${rows.length} trades`;
+  $("#feedEmpty").hidden = rows.length > 0;
+  $("#feedEmpty").textContent = STATUS && !STATUS.last_sync
+    ? "Catching up on trades since the app last ran — this first sync can take a few minutes."
+    : "No matching trades yet. Lower the size filter or widen the window.";
+  $("#feedBody").innerHTML = rows.map(t => {
+    const key = t.tx + t.asset + t.side + t.size;
+    const fresh = !firstFeed && !seen.has(key); seen.add(key);
+    const backs = t.yes_usd > 0;
+    const sideTxt = `${t.side === "BUY" ? "Buy" : "Sell"} ${t.outcome}`;
+    return `<tr class="${fresh ? "fresh" : ""}">
+      <td class="num muted" title="${new Date(t.ts*1000).toLocaleString()}">${clock(t.ts)}</td>
+      <td class="r num"><b>${money(t.usd)}</b></td>
+      <td><span class="side ${backs ? "pos" : "neg"}">${esc(sideTxt)}</span> <span class="faint" style="font-size:12px">${backs ? "backs" : "fades"}</span></td>
+      <td class="r num">${(t.price*100).toFixed(1)}¢</td>
+      <td>${esc(CITY(t.city))} <span class="faint">${esc((t.date||"").slice(5))}${t.kind === "low" ? " · low" : ""}</span></td>
+      <td>${esc(t.label || "")}</td>
+      <td><a class="link" data-w="${esc(t.wallet)}">${esc(nm(t.name, t.wallet))}</a></td>
+      <td>${tagChip(t.tag)}</td>
+      <td>${t.us_code ? `<a class="link chip us" data-sig="${esc(t.city)}|${esc(t.date)}">${t.us_code.toUpperCase()} →</a>` : ""}</td></tr>`;
+  }).join("");
+  firstFeed = false;
+}
+
+/* ---------- whales ---------- */
+let whBy = store.get("whBy", "pnl");
+$$("#whBy button").forEach(b => { b.classList.toggle("on", b.dataset.b === whBy);
+  b.onclick = () => { whBy = b.dataset.b; store.set("whBy", whBy); $$("#whBy button").forEach(x => x.classList.toggle("on", x === b)); loadWhales(); }; });
+["#whDays", "#whMin"].forEach(s => $(s).onchange = () => loadWhales());
+const star = (w, on) => `<button class="star ${on ? "on" : ""}" data-star="${esc(w)}" title="${on ? "Unwatch" : "Watch"}">${on ? "★" : "☆"}</button>`;
+
+async function loadWhales() {
+  const q = new URLSearchParams({ by: whBy, days: $("#whDays").value, min_trades: $("#whMin").value, top: 50 });
+  const j = await api("/api/whales?" + q);
+  $("#whBody").innerHTML = j.wallets.map(r => `<tr>
+    <td>${star(r.wallet, r.manual)}</td>
+    <td><a class="link" data-w="${esc(r.wallet)}">${esc(nm(r.name, r.wallet))}</a> ${nm(r.name, r.wallet) !== short(r.wallet) ? `<span class="faint mono">${short(r.wallet)}</span>` : ""} ${r.tag && r.tag !== "manual" ? tagChip(r.tag) : ""}</td>
+    <td class="r num">${r.n}</td><td class="r num">${r.events}</td>
+    <td class="r num">${money(r.vol)}</td><td class="r num">${money(r.biggest)}</td>
+    <td class="r num ${signCls(r.pnl)}"><b>${money(r.pnl)}</b></td>
+    <td class="r num ${signCls(r.roi)}">${pct(r.roi)}</td><td class="r num">${pct(r.hit)}</td>
+    <td class="r num muted">${r.lb_rank || ""}</td><td class="r num muted">${ago(r.last_ts)}</td></tr>`).join("")
+    || `<tr><td colspan="11" class="empty">No wallets yet — the first sync may still be running.</td></tr>`;
+}
+
+/* ---------- leaderboard ---------- */
+let lbPeriod = store.get("lbPeriod", "MONTH");
+$$("#lbPeriod button").forEach(b => { b.classList.toggle("on", b.dataset.p === lbPeriod);
+  b.onclick = () => { lbPeriod = b.dataset.p; store.set("lbPeriod", lbPeriod); $$("#lbPeriod button").forEach(x => x.classList.toggle("on", x === b)); loadLB(); }; });
+$("#lbRefresh").onclick = () => loadLB(true);
+
+async function loadLB(refresh) {
+  const j = await api(`/api/leaderboard?period=${lbPeriod}${refresh ? "&refresh=1" : ""}`);
+  $("#lbBody").innerHTML = j.rows.map(r => `<tr>
+    <td>${star(r.wallet, r.manual)}</td><td class="r num muted">${r.rank}</td>
+    <td><a class="link" data-w="${esc(r.wallet)}">${esc(nm(r.name, r.wallet))}</a> ${nm(r.name, r.wallet) !== short(r.wallet) ? `<span class="faint mono">${short(r.wallet)}</span>` : ""}</td>
+    <td class="r num">${money(r.vol)}</td><td class="r num ${signCls(r.pnl)}"><b>${money(r.pnl)}</b></td>
+    <td class="r num">${r.vol ? pct(r.pnl / r.vol) : "—"}</td>
+    <td class="r num muted">${r.local ? r.local.n : "—"}</td></tr>`).join("");
+  if (refresh) toast("Leaderboard refreshed");
+}
+
+/* ---------- signal ---------- */
+let EVENTS = [];
+async function loadEvents() {
+  const j = await api("/api/events");
+  EVENTS = j.events;
+  const cities = [...new Set(EVENTS.map(e => e.city))].sort();
+  const fc = $("#feedCity"), cur = fc.value;
+  fc.innerHTML = `<option value="">all</option><option value="__us">US cities only</option>` + cities.map(c => `<option value="${esc(c)}">${esc(CITY(c))}</option>`).join("");
+  fc.value = cur;
+  const us = EVENTS.filter(e => e.us_code);
+  const sel = $("#sgEvent"), prev = sel.value || store.get("sgEvent", "");
+  sel.innerHTML = us.map(e => `<option value="${esc(e.city)}|${e.date}">${CITY(e.city)} · ${e.date}${e.closed ? " (settled)" : ""} · ${money(e.vol)} traded</option>`).join("");
+  if ([...sel.options].some(o => o.value === prev)) sel.value = prev;
+  else { const firstOpen = us.find(e => !e.closed); if (firstOpen) sel.value = `${firstOpen.city}|${firstOpen.date}`; }
+}
+["#sgEvent", "#sgMin", "#sgTop"].forEach(s => $(s).onchange = () => { store.set("sgEvent", $("#sgEvent").value); loadSignal(); });
+
+async function loadSignal() {
+  const v = $("#sgEvent").value; if (!v) return;
+  const [city, date] = v.split("|");
+  const out = $("#sgOut");
+  if (!out.dataset.v || out.dataset.v !== v) out.innerHTML = `<div class="empty"><span class="spin"></span> loading…</div>`;
+  out.dataset.v = v;
+  let s;
+  try { s = await api(`/api/signal?${new URLSearchParams({ city, date, min_usd: $("#sgMin").value, top: $("#sgTop").value })}`); }
+  catch (e) { out.innerHTML = `<div class="note warn">${esc(e.message)}</div>`; return; }
+
+  const warn = s.same_station ? "" : `<div class="note warn"><b>Different thermometers.</b> International settles on <b>${esc(s.intl_station || "?")}</b> (NOAA hourly obs max); Polymarket US settles on <b>${esc(s.us_station)}</b> (NWS CLI daily max). Read the whale view as a prior, not a price.</div>`;
+  const thin = s.net_long < 1000 ? `<div class="note info">Only ${money(s.net_long)} of net-long whale money on this event — too thin to read the share vs mid gap as a signal.</div>` : "";
+  const maxW = Math.max(0.01, ...s.ladder.map(b => Math.max(b.whale_share || 0, b.mid || 0)));
+  const ladder = s.us_error ? `<div class="note warn">${esc(s.us_error)}</div>` : s.ladder.map(b => {
+    const gap = b.whale_share != null && b.mid != null ? (b.whale_share - b.mid) * 100 : null;
+    return `<div class="lrow">
+      <div><div class="lbl">${esc(b.label)}</div><div class="faint num" style="font-size:12px">${b.bid != null ? (b.bid*100).toFixed(0) : "—"} / ${b.ask != null ? (b.ask*100).toFixed(0) : "—"}¢</div></div>
+      <div class="bars" title="whale share ${pct(b.whale_share)} · US mid ${pct(b.mid)} · whale $ ${money(b.whale_usd)}">
+        <div class="b wh" style="width:${(100*(b.whale_share||0)/maxW).toFixed(1)}%"></div>
+        <div class="b us" style="width:${(100*(b.mid||0)/maxW).toFixed(1)}%"></div></div>
+      <div class="r num ${gap == null ? "faint" : gap > 0 ? "pos" : "neg"}" style="text-align:right;font-weight:600">${gap == null ? "—" : (gap > 0 ? "+" : "") + gap.toFixed(0) + "pt"}</div></div>`;
+  }).join("");
+  const maxI = Math.max(1, ...s.intl.map(b => Math.abs(b.yes_usd)));
+  const intl = s.intl.map(b => `<div class="div">
+      <div class="num">${esc(b.label)}</div>
+      <div class="neg-half">${b.yes_usd < 0 ? `<div class="b n" style="width:${(100*-b.yes_usd/maxI).toFixed(1)}%"></div>` : ""}</div>
+      <div class="pos-half">${b.yes_usd > 0 ? `<div class="b p" style="width:${(100*b.yes_usd/maxI).toFixed(1)}%"></div>` : ""}</div>
+      <div class="num ${signCls(b.yes_usd)}" style="text-align:right">${money(b.yes_usd)}</div></div>`).join("")
+    || `<div class="empty">No qualifying whale trades on this event yet.</div>`;
+  const wallets = s.wallets.map(w => `<tr><td><a class="link" data-w="${esc(w.wallet)}">${esc(nm(w.name, w.wallet))}</a></td><td class="r num">${w.n}</td><td class="r num">${money(w.usd)}</td></tr>`).join("");
+
+  out.innerHTML = warn + thin + `
+    <div class="grid g2">
+      <div class="card"><div class="hd"><h3>Polymarket US ladder</h3><span class="spacer"></span><span class="faint">${CITY(s.city)} · ${s.date} · ${s.n_trades} whale trades</span></div>
+        <div class="ladder">${ladder}</div>
+        <div class="legend"><span><i style="background:var(--accent)"></i>whale share</span><span><i style="background:var(--us);opacity:.55"></i>US mid</span><span>right column: whale share − mid</span></div></div>
+      <div class="grid">
+        <div class="card"><div class="hd"><h3>International buckets — net $</h3></div>
+          <div style="padding:10px 0">${intl}</div>
+          <div class="legend"><span><i style="background:var(--neg)"></i>fading</span><span><i style="background:var(--pos)"></i>backing</span></div></div>
+        <div class="card"><div class="hd"><h3>Whales in this event</h3></div>
+          <div class="tablewrap"><table><thead><tr><th>wallet</th><th class="r">trades</th><th class="r">$</th></tr></thead><tbody>${wallets || `<tr><td colspan=3 class="faint">none</td></tr>`}</tbody></table></div></div>
+      </div>
+    </div>
+    <p class="faint" style="font-size:12.5px;margin-top:14px">Whale share = net-long whale dollars per US bucket, normalised across the ladder. International buckets are 2°F wide, so each one's money is split evenly across its degrees before it's summed into the US buckets. This is a crowd-of-whales view, not a probability; compare it with the forecast before acting.</p>`;
+}
+
+/* ---------- wallet drawer ---------- */
+async function openWallet(w, live) {
+  $("#scrim").classList.add("on"); $("#drawer").classList.add("on");
+  const d = $("#drawerIn");
+  if (!live) d.innerHTML = `<div class="empty"><span class="spin"></span> loading ${short(w)}…</div>`;
+  let j;
+  try { j = await api(`/api/wallet?address=${w}${live ? "&live=1" : ""}`); }
+  catch (e) { d.innerHTML = `<div class="note warn">${esc(e.message)}</div>`; return; }
+  const s = j.stats || {}, lb = j.leaderboard || [];
+  const name = nm(j.trades[0] && j.trades[0].name, w);
+  const lbTxt = lb.map(r => `${r.period.toLowerCase()} #${r.rank} · ${money(r.pnl)}`).join(" · ");
+  d.innerHTML = `
+    <div style="display:flex;align-items:flex-start;gap:12px">
+      <div style="flex:1"><h2>${esc(name)} ${tagChip(j.tag)}</h2>
+        <div class="mono faint">${esc(w)}</div>
+        ${lbTxt ? `<div class="muted" style="margin-top:4px;font-size:13px">Official leaderboard: ${esc(lbTxt)}</div>` : ""}</div>
+      <button class="btn" id="dStar">${j.manual ? "★ Watching" : "☆ Watch"}</button>
+      <button class="btn" id="dLive">Refresh</button>
+      <button class="iconbtn" id="dClose">✕</button>
+    </div>
+    <div style="margin:10px 0 16px;font-size:13px"><a class="link" href="https://polymarket.com/profile/${esc(w)}" target="_blank" rel="noopener">Open on polymarket.com ↗</a></div>
+    <div class="tiles">
+      <div class="tile"><div class="k">PnL</div><div class="v num ${signCls(s.pnl)}">${money(s.pnl)}</div></div>
+      <div class="tile"><div class="k">ROI</div><div class="v num ${signCls(s.roi)}">${pct(s.roi)}</div></div>
+      <div class="tile"><div class="k">Hit rate</div><div class="v num">${pct(s.hit)}</div></div>
+      <div class="tile"><div class="k">Volume</div><div class="v num">${money(s.vol)}</div></div>
+      <div class="tile"><div class="k">Biggest</div><div class="v num">${money(s.biggest)}</div></div>
+      <div class="tile"><div class="k">Trades</div><div class="v num">${s.n ?? 0}</div></div>
+    </div>
+    <div class="card" style="margin-top:14px"><div class="hd"><h3>By city</h3><span class="spacer"></span><span class="faint">last ${j.trades.length} trades</span></div><div class="tablewrap"><table>
+      <thead><tr><th>city</th><th class="r">trades</th><th class="r">volume</th><th class="r">resolved PnL</th></tr></thead>
+      <tbody>${j.cities.map(c => `<tr><td>${esc(CITY(c.city))}</td><td class="r num">${c.n}</td><td class="r num">${money(c.vol)}</td><td class="r num ${signCls(c.pnl)}">${money(c.pnl)}</td></tr>`).join("")}</tbody></table></div></div>
+    <div class="card" style="margin-top:14px"><div class="hd"><h3>Recent temperature trades</h3><span class="spacer"></span><span class="faint">${j.trades.length} shown</span></div><div class="tablewrap"><table>
+      <thead><tr><th>when</th><th>market</th><th>bucket</th><th>trade</th><th class="r">price</th><th class="r">size</th><th class="r">result</th></tr></thead>
+      <tbody>${j.trades.map(t => `<tr>
+        <td class="muted num" title="${new Date(t.ts*1000).toLocaleString()}">${ago(t.ts)}</td>
+        <td>${esc(CITY(t.city))} <span class="faint">${esc((t.date||"").slice(5))}</span></td><td>${esc(t.label || "")}</td>
+        <td class="side ${(t.side === "BUY") === (t.outcome_index === 0) ? "pos" : "neg"}">${t.side === "BUY" ? "Buy" : "Sell"} ${esc(t.outcome)}</td>
+        <td class="r num">${(t.price*100).toFixed(1)}¢</td><td class="r num">${money(t.usd)}</td>
+        <td class="r num ${t.won == null ? "faint" : t.won ? "pos" : "neg"}">${t.won == null ? "open" : money(t.pnl)}</td></tr>`).join("")}</tbody></table></div></div>`;
+  $("#dClose").onclick = closeDrawer;
+  $("#dLive").onclick = () => { $("#dLive").innerHTML = `<span class="spin"></span>`; openWallet(w, true); };
+  $("#dStar").onclick = async () => { await toggleWatch(w, !j.manual); openWallet(w, false); };
+}
+function closeDrawer() { $("#scrim").classList.remove("on"); $("#drawer").classList.remove("on"); }
+$("#scrim").onclick = closeDrawer;
+addEventListener("keydown", e => { if (e.key === "Escape") { closeDrawer(); $("#settings").classList.remove("on"); } });
+
+async function toggleWatch(w, on) {
+  await api("/api/watch", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ wallet: w, on }) });
+  toast(on ? "Watching " + short(w) : "Stopped watching " + short(w));
+}
+
+/* delegated clicks: wallet links, stars, US signal jumps */
+document.addEventListener("click", async e => {
+  const a = e.target.closest("[data-w]"); if (a) { e.preventDefault(); openWallet(a.dataset.w); return; }
+  const s = e.target.closest("[data-star]");
+  if (s) { const on = !s.classList.contains("on"); await toggleWatch(s.dataset.star, on); refresh(); return; }
+  const g = e.target.closest("[data-sig]");
+  if (g) { e.preventDefault(); await loadEvents(); $("#sgEvent").value = g.dataset.sig; store.set("sgEvent", g.dataset.sig); show("signal"); }
+});
+
+/* ---------- settings ---------- */
+const SKEYS = ["interval", "min_trade", "min_usd", "top", "include_sweeps", "notify"];
+$("#settingsBtn").onclick = () => {
+  const st = (STATUS && STATUS.settings) || {};
+  SKEYS.forEach(k => { const el = $("#s_" + k); if (el.type === "checkbox") el.checked = !!st[k]; else el.value = st[k]; });
+  $("#settings").classList.add("on");
+};
+$("#sCancel").onclick = () => $("#settings").classList.remove("on");
+$("#sSave").onclick = async () => {
+  const body = {}; SKEYS.forEach(k => { const el = $("#s_" + k); body[k] = el.type === "checkbox" ? el.checked : Number(el.value); });
+  await api("/api/settings", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+  $("#settings").classList.remove("on"); $("#feedMin").value = body.min_trade; toast("Settings saved"); loadStatus(); refresh();
+};
+
+$("#sStop").onclick = async () => {
+  await api("/api/shutdown", { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" });
+  $("#settings").classList.remove("on");
+  document.querySelector("main").innerHTML = `<div class="empty">wxwhales has stopped. Open the app again to restart it.</div>`;
+};
+
+/* ---------- loop ---------- */
+async function refresh() {
+  try {
+    if (view === "feed") await loadFeed();
+    else if (view === "whales") await loadWhales();
+    else if (view === "leaderboard") await loadLB();
+    else if (view === "signal") { if (!$("#sgEvent").options.length) await loadEvents(); await loadSignal(); }
+  } catch (e) { console.error(e); toast(e.message); }
+}
+(async function boot() {
+  await loadStatus();
+  if (STATUS && STATUS.settings) $("#feedMin").value = STATUS.settings.min_trade;
+  try { await loadEvents(); } catch {}
+  show(view);
+  setInterval(loadStatus, 5000);
+  setInterval(() => { if (!document.hidden && (view === "feed" || view === "whales")) refresh(); }, 15000);
+  setInterval(() => { if (!document.hidden && view === "signal") loadSignal(); }, 60000);
+  setInterval(() => loadEvents().catch(() => {}), 300000);
+})();
+</script>
+</body>
+</html>
