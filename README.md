@@ -8,6 +8,13 @@ Uses only the Python standard library. Data lives in `data/wxwhales.sqlite`.
 
 ## The app
 
+![Live feed](docs/screenshots/feed.png)
+
+| Whales | US signal |
+|---|---|
+| ![Whales](docs/screenshots/whales.png) | ![US signal](docs/screenshots/signal.png) |
+
+
 ```bash
 ./make_app.sh        # once: builds ~/Applications/wxwhales.app (uses your current python3)
 ```

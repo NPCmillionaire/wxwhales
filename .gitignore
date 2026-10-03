@@ -21,3 +21,6 @@ data/*.log
 env/
 venv/
 ENV/
+
+# Local runtime data (DB, logs, settings)
+data/
